@@ -18,23 +18,34 @@ async function onSearchBtnClick(e) {
   e.preventDefault();
   gallery.innerHTML = '';
 
-  imageApiService.query = e.currentTarget.elements.searchQuery.value;
+  imageApiService.query = e.currentTarget.elements.searchQuery.value.trim();
   imageApiService.startPage();
 
+  loadMoreBtn.classList.add('is-hidden');
+
   try {
+    /*Проверка на пустую строку */
+    if (!imageApiService.query) {
+      gallery.innerHTML = '';
+      loadMoreBtn.classList.add('is-hidden');
+      Notify.failure('Please, enter a request.');
+      return;
+    }
+
     const response = await imageApiService.fetchImages();
+
+    if (response.totalHits > 40) {
+      loadMoreBtn.classList.remove('is-hidden');
+    }
+
     if (response.totalHits === 0) {
       Notify.failure(
         'Sorry, there are no images matching your search query. Please try again.'
       );
       return;
-    } else if (response.totalHits < imageApiService.per_page) {
-      Notify.success(`Hooray! We found ${response.totalHits} images.`);
-      renderMarkupImages(response.hits);
     } else {
       Notify.success(`Hooray! We found ${response.totalHits} images.`);
       renderMarkupImages(response.hits);
-      loadMoreBtn.classList.remove('is-hidden');
     }
   } catch (error) {
     console.log(error);
@@ -42,8 +53,21 @@ async function onSearchBtnClick(e) {
 }
 
 async function clickLoadMore() {
-  const response = await imageApiService.fetchImages();
-  renderMarkupImages(response.hits);
+  try {
+    const response = await imageApiService.fetchImages();
+    renderMarkupImages(response.hits);
+      scroll();
+      /*Прячем кнопку подгрузки картинок если картинок больше нет */
+    const currentHits = response.hits.length;
+    
+    if (currentHits < 40) {
+      loadMoreBtn.classList.add('is-hidden');
+      }
+      
+  } catch (error) {
+    Notify.info("We're sorry, but you've reached the end of search results.");
+    loadMoreBtn.classList.add('is-hidden');
+  }
 }
 
 function renderMarkupImages(images) {
@@ -83,4 +107,16 @@ function renderMarkupImages(images) {
 
   gallery.insertAdjacentHTML('beforeend', markup);
   lightboxGallery.refresh();
+}
+/*Прокрутка после рендера новых картинок */
+
+function scroll() {
+  const { height: cardHeight } = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
 }
