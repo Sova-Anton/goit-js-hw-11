@@ -59,14 +59,13 @@ async function clickLoadMore() {
       scroll();
       /*Прячем кнопку подгрузки картинок если картинок больше нет */
     const currentHits = response.hits.length;
-    
+    console.log(currentHits);
     if (currentHits < 40) {
+      Notify.info("We're sorry, but you've reached the end of search results.");
       loadMoreBtn.classList.add('is-hidden');
-      }
-      
-  } catch (error) {
-    Notify.info("We're sorry, but you've reached the end of search results.");
-    loadMoreBtn.classList.add('is-hidden');
+      }      
+  } catch (error) {    
+    console.log(error);
   }
 }
 
